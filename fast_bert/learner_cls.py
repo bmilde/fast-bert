@@ -140,6 +140,11 @@ if version.parse(torch.__version__) >= version.parse("1.6"):
 else:
     IS_AMP_AVAILABLE = False
 
+def is_xpu_available():
+    if hasattr(torch, 'xpu'):
+        return torch.xpu.is_available()
+    else:
+        return False
 
 def load_model(
     dataBunch,
@@ -153,8 +158,12 @@ def load_model(
     model_type = dataBunch.model_type
     model_state_dict = None
 
+
+    # Determine the appropriate map_location based on device availability
     if torch.cuda.is_available():
         map_location = lambda storage, loc: storage.cuda()
+    elif is_xpu_available():
+        map_location = lambda storage, loc: storage.xpu()
     else:
         map_location = "cpu"
 

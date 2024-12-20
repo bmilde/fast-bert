@@ -12,6 +12,11 @@ import warnings
 warnings.filterwarnings("ignore", message="numpy.dtype size changed")
 warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
+def is_xpu_available():
+    if hasattr(torch, 'xpu'):
+        return torch.xpu.is_available()
+    else:
+        return False
 
 class BertClassificationPredictor(object):
     def __init__(
@@ -24,12 +29,14 @@ class BertClassificationPredictor(object):
         do_lower_case=True,
         device=None,
     ):
+
         if device is None:
-            device = (
-                torch.device("cuda")
-                if torch.cuda.is_available()
-                else torch.device("cpu")
-            )
+            if torch.cuda.is_available():
+                device = torch.device("cuda")
+            elif is_xpu_available():
+                device = torch.device("xpu")
+            else:
+                device = torch.device("cpu")
 
         self.model_path = model_path
         self.label_path = label_path
@@ -99,12 +106,14 @@ class BertOnnxClassificationPredictor(object):
         do_lower_case=True,
         device=None,
     ):
+        
         if device is None:
-            device = (
-                torch.device("cuda")
-                if torch.cuda.is_available()
-                else torch.device("cpu")
-            )
+            if torch.cuda.is_available():
+                device = torch.device("cuda")
+            elif is_xpu_available():
+                device = torch.device("xpu")
+            else:
+                device = torch.device("cpu")
 
         self.model_path = model_path
         self.label_path = label_path
